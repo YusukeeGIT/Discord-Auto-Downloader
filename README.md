@@ -1,4 +1,4 @@
-#### This is a modified version of [PvtSeaCow](https://github.com/PvtSeaCow/Discord-AutoDownloader)
+#### This is a modified version of [PvtSeaCow's Discord-AutoDownloader](https://github.com/PvtSeaCow/Discord-AutoDownloader)
 
 # IMPORTANT
 - Requires Python 3.5 64bit, NOTHING ELSE, ANY OTHER VERSION WILL NOT WORK  
