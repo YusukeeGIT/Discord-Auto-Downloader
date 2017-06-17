@@ -63,6 +63,3 @@ pictures/
 run - *.bat
 credentials.txt
 imgur.txt
-
-#Ipython Notebook
-.ipynb_checkpoints
