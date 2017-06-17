@@ -30,12 +30,6 @@ except:
     sleep(2)
     import imgurpython
     from imgurpython import ImgurClient
-try:
-    import tweepy
-except:
-    pip.main(['install', 'tweepy'])
-    sleep(2)    
-    import tweepy
 from sys import modules
 
 client = discord.Client()
