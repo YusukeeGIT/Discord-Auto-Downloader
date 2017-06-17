@@ -85,7 +85,7 @@ async def on_message(message):
     elif "Linux" in platform.system():
         dash = '/'
     currentTime = strftime("%H:%M:%S", localtime())    
-    if (not message.author.bot) and (not checkIgnore(message)):
+    if (not message.author.bot) and (not checkIgnoreChannel(message)):
         imgurlink = re.findall("(https?)\:\/\/(?:i\.)?(www\.)?(?:m\.)?imgur\.com\/(gallery\/|a\/|r\/[a-z]+)?(?:\/)?([a-zA-Z0-9]+)(#[0-9]+)?(?:\.gifv)?", message.content)
         imgurmatch = re.match("(https?)\:\/\/(?:i\.)?(www\.)?(?:m\.)?imgur\.com\/(gallery\/|a\/|r\/[a-z]+)?(?:\/)?([a-zA-Z0-9]+)(#[0-9]+)?(?:\.gifv)?", message.content)
         twimglink = re.findall("(https?)\:\/\/(www\.)?(?:m\.)?(pbs.twimg\/+)\.com\/(media\/+)?(?:\/)?([a-zA-Z0-9_.:]+)(#[0-9]+)?(?:\.gifv)?", message.content)
@@ -180,20 +180,21 @@ async def on_message(message):
             print(message.server.name+': '+message.author.name+': '+message.content)
 
 
-def checkIgnore(message):
-    channelsFile = open("channels_to_ignore.txt","r")
-    serversFile = open("servers_to_ignore.txt","r")
-    channelsToIgnore = channelsFile.read().splitlines()
-    serversToIgnore = serversFile.read().splitlines()
+def checkIgnoreChannel(message):
+    ignoreChannelsFile = open("channels_to_ignore.txt","r")
+    watchServersFile = open("servers_to_watch.txt","r")
+    channelsToIgnore = ignoreChannelsFile.read().splitlines()
+    serversToWatch = watchServersFile.read().splitlines()
     channelsToIgnore.append('bot')
-    serversToIgnore.append('bot')
-    for server in serversToIgnore:
-        if server == message.server.name:
-            ignoreServer = True
+    if not serversToWatch:
+        serversToWatch.append('all')
+    for server in serversToWatch:
+        if (server == message.server.name) or ('all' == server):
+            watchServer = True
             break
         else:
-            ignoreServer = False
-    if not ignoreServer:
+            watchServer = False
+    if watchServer:
         for channel in channelsToIgnore:
             if channel == message.channel.name:
                 ignoreMessage = True
