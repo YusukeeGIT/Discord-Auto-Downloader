@@ -40,6 +40,9 @@ Running this bot acts as another login and will keep you online as long as this 
 (ROOT) = The folder the script is in.  
 This bot may not download every picture (working on it.) 
 
+## TODO
+	[] Clean code because it is a mess now.
+	[] Check if download error occure.
 
 ## Credits
 
