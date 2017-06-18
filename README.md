@@ -19,6 +19,7 @@ Running this bot acts as another login and will keep you online as long as this 
 ~~Because you are now online with this bot on, ALL notifications will not show up on mobile (Might Change in the future).~~ (Might work now, I need to do more testing)
 
 # Ignore servers / channels:
+- Ignore bots in all server / channel
 #### Servers:
 - Add server name to servers_to_ignore.txt file
 - New line for every server name.
@@ -40,6 +41,9 @@ Running this bot acts as another login and will keep you online as long as this 
 (ROOT) = The folder the script is in.  
 This bot may not download every picture (working on it.) 
 
+## TODO
+	Clean code because it is a mess now.
+	Check if download error occure.
 
 ## Credits
 
