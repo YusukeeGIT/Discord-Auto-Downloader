@@ -110,11 +110,13 @@ async def on_ready():
 async def on_message(message):    
     if (not message.author.bot) and (not checkIgnoreChannel(message)):
         currentTime = strftime("%H:%M:%S", localtime())
-        imgurlink = re.findall("(https?)\:\/\/(?:i\.)?(www\.)?(?:m\.)?imgur\.com\/(gallery\/|a\/|r\/[a-z]+)?(?:\/)?([a-zA-Z0-9]+)(#[0-9]+)?(?:\.gifv)?", message.content)
         imgurmatch = re.match("(https?)\:\/\/(?:i\.)?(www\.)?(?:m\.)?imgur\.com\/(gallery\/|a\/|r\/[a-z]+)?(?:\/)?([a-zA-Z0-9]+)(#[0-9]+)?(?:\.gifv)?", message.content)
-        twittermatch = re.match("(https?)\:\/\/(www\.)?(?:m\.)?twitter.com\/", message.content)
+        twittermatch = re.match("(https?)\:\/\/(www\.)?(?:m\.)?(twitter.com\/)([a-zA-Z0-9\_\.]+)(\/status\/)+([a-zA-Z0-9]+)", message.content)
+        instagrammatch = re.match("(https?)\:\/\/(www\.)?(m\.)?(instagram\.com\/p\/)+([a-zA-Z0-9]+)+(\/)+", message.content)
+        #instagramImage = (https?)\:\/\/(www\.)?(m\.)?(instagram\.)+([a-z]{4}[0-9]+\-+[0-9]+\.fna\.fbcdn\.net)+(\/[a-z0-9A-Z]+\.[a-z0-9A-Z]+\-[a-z0-9A-Z]+\/[a-z0-9A-Z]+\/[a-z0-9A-Z]+\_[a-z0-9A-Z]+\_[a-z0-9A-Z]+\_[a-z0-9A-Z]+)+((.jpg)?(.png)?)+
         try:
             if imgurmatch:
+                imgurlink = re.findall("(https?)\:\/\/(?:i\.)?(www\.)?(?:m\.)?imgur\.com\/(gallery\/|a\/|r\/[a-z]+)?(?:\/)?([a-zA-Z0-9]+)(#[0-9]+)?(?:\.gifv)?", message.content)
                 try:
                     for lnk in imgurlink:
                         name = str(message.server.name)+dash+str(message.channel.name)+dash+'@imgur'+dash+str(imgur.get_album(lnk[3]).id)
@@ -144,23 +146,37 @@ async def on_message(message):
                         else:
                             thing = str(pic.link).split('/')
                             await download_file(str(pic.link), str(name), str(thing[-1].split('.')[-2]), str(thing[-1].split('.')[-1]), dash)
-            elif (twittermatch):
-                name = str(message.server.name)+dash+str(message.channel.name)      
-                if message.embeds:
-                    for pic in message.embeds:
-                        thing = str(pic['url']).split('/')
-                        url = str(pic['url'])
-                        fileType = 'tmp'
-                        try:
-                            await download_file(url, str(name), str(thing[-1].split('.')[0]), fileType, dash)
-                        except:
-                            print('exception')
-                            pass
-                        try:
-                            await twitterImageDownload(message, url, str(name), str(thing[-1].split('.')[0]), dash)
-                        except:
-                            print('twitterImageDownload exception')
-                            pass
+            elif twittermatch:
+                path = str(message.server.name)+dash+str(message.channel.name) 
+                twitterlink = re.search("(https?)\:\/\/(www\.)?(?:m\.)?(twitter.com\/)([a-zA-Z0-9\_\.]+)(\/status\/)+([a-zA-Z0-9]+)", message.content) 
+                url = twitterlink.group(0)
+                thing = url.split('/')
+                fileName = str(thing[-1].split('.')[0])
+                try:
+                    await download_file(url, path, fileName, 'tmp', dash)
+                except:
+                    print('ERROR | Twitter image download')
+                    raise
+                try:
+                    await twitterImageDownload(message, url, path, str(thing[-1].split('.')[0]), dash)
+                except:
+                    print('ERROR | Twitter image download')
+                    raise
+            elif instagrammatch:
+                path = str(message.server.name)+dash+str(message.channel.name)
+                instagramlink = re.search("(https?)\:\/\/(www\.)?(m\.)?(instagram\.com\/p\/)+([a-zA-Z0-9]+)+(\/)+", message.content)
+                url = instagramlink.group(0)
+                fileName = 'instagram'
+                try:
+                    await download_file(url, path, fileName, 'tmp', dash)
+                except:
+                    print('ERROR | Instagram image download')
+                    raise
+                try:
+                    await instagramImageDownload(message, url, path, fileName, dash)
+                except:
+                    print('ERROR | Instagram image download')
+                    raise
             elif (not message.channel.is_private) and ((message.embeds) or (message.attachments)) and (not imgurmatch):
                 name = str(message.server.name)+dash+str(message.channel.name)
                 print('['+str(currentTime)+']: Download image from: '+message.server.name+': '+message.channel.name)
@@ -216,8 +232,32 @@ async def on_message(message):
                 else:
                     print('ERROR!! |'+str(pic['url'])+'|'+name+'|'+str(thing[-1].split('.')[-2])+'|'+str(thing[-1].split('.')[-1]))
         except:
-            pass
-            print(message.server.name+': '+message.author.name+': '+message.content)
+            raise
+            print('ERROR!!!! | '+message.server.name+': '+message.author.name+': '+message.content)
+
+async def instagramImageDownload(message, url, path, fileName, dash):
+    currentTime = strftime("%H:%M:%S", localtime())  
+    instagramFile = open('pictures'+dash+path+dash+fileName+'.tmp', "r", encoding="utf8")
+    instagramFileLines = instagramFile.read().splitlines()
+    instagramImageRegex = '(https?)\:\/\/(www\.)?(m\.)?(instagram\.)+([a-z]{4}[0-9]+\-+[0-9]+\.fna\.fbcdn\.net)+(\/[a-z0-9A-Z]+\.[a-z0-9A-Z]+\-[a-z0-9A-Z]+\/[a-z0-9A-Z]+\/[a-z0-9A-Z]+\_[a-z0-9A-Z]+\_[a-z0-9A-Z]+\_[a-z0-9A-Z]+)+((.jpg)?(.png)?)+'
+    for line in instagramFileLines:
+        pic = re.search(instagramImageRegex, line)
+        if pic:
+            url = pic.group(0)
+            break;
+        else:
+            url = False
+    instagramFile.close()
+    if url:
+        print('['+str(currentTime)+']: Download Instagram image from: '+message.server.name+': '+message.channel.name)       
+        thing = url.split('/')
+        fileType = str(thing[-1].split('.')[-1])
+        try:
+            await download_file(url, path, fileName, fileType, dash)
+        except:
+            print('exception')
+            raise   
+    os.remove('pictures'+dash+path+dash+fileName+'.tmp')
 
 async def twitterImageDownload(message, url, path, file_name, dash):
     currentTime = strftime("%H:%M:%S", localtime())   
