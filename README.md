@@ -18,7 +18,12 @@ This is a discord bot that automatically downloads any picture from any of the s
 Running this bot acts as another login and will keep you online as long as this bot is on. There is no way to change this because Discord doesn't allow users to be offline and online at the same time (At the moment).  
 ~~Because you are now online with this bot on, ALL notifications will not show up on mobile (Might Change in the future).~~ (Might work now, I need to do more testing)
 
-# Ignore servers / channels:
+# Settings
+- Run the script first to generate all settings / ignore files.
+- This bot can extract pictures from imgur, twitter, instagram posts
+- In settings.txt you can set to ignore these posts.
+
+### Ignore servers / channels:
 - Ignore bots in all server / channel
 #### Servers:
 - Add server name to servers_to_ignore.txt file
