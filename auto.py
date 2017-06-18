@@ -179,7 +179,7 @@ async def on_message(message):
             elif twittermatch and (not ignoreTwitter):
                 path = str(message.server.name)+dash+str(message.channel.name) 
                 linkRegex = '(https?)\:\/\/(www\.)?(?:m\.)?(twitter.com\/)([a-zA-Z0-9\_\.]+)(\/status\/)+([a-zA-Z0-9]+)'
-                imageRegex = '(https?)\:\/\/(www\.)?(m\.)?(pbs.twimg.com\/media\/)+([a-zA-Z0-9]{15})((\.jpg)?(\.png)?)+(\:large)?'
+                imageRegex = '(https?)\:\/\/(www\.)?(m\.)?(pbs.twimg.com\/media\/)+([a-zA-Z0-9\-\_\.]{15})((\.jpg)?(\.png)?)+(\:large)?'
                 twitterlink = re.search(linkRegex, message.content) 
                 url = twitterlink.group(0)
                 thing = url.split('/')
