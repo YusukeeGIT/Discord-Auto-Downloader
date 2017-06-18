@@ -260,9 +260,9 @@ async def download_file(url, path, file_name, file_type, dash):
     try:
         test_file = Path('.'+dash+'pictures'+dash+path+dash+str(file_name)+'.'+str(file_type))
         test_path = test_file.resolve()
-        random_number = random.randint(1, 10000000000000)
+        time = strftime("%Y%m%d%H%M%S", localtime())
         r = requests.get(url, headers=headers, stream=True)
-        with open('.'+dash+'pictures'+dash+path+dash+str(file_name)+str(random_number)+'.'+str(file_type), 'wb') as f:
+        with open('.'+dash+'pictures'+dash+path+dash+str(file_name)+'_'+str(time)+'.'+str(file_type), 'wb') as f:
             for chunk in r.iter_content(chunk_size=1024):
                 if chunk:
                     f.write(chunk)
