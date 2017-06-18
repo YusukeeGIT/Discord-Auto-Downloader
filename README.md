@@ -21,10 +21,10 @@ Running this bot acts as another login and will keep you online as long as this 
 # Settings
 - Run the script first to generate all settings / ignore files.
 - This bot can extract pictures from imgur, twitter, instagram posts
-- In settings.txt you can set to ignore these posts.
+- In settings.txt you can set to ignore these posts. (1 to ignore | 0 to watch)
 
 ### Ignore servers / channels:
-- Ignore bots in all server / channel
+- Ignores bots in all server / channel by default.
 #### Servers:
 - Add server name to servers_to_ignore.txt file
 - New line for every server name.
