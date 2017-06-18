@@ -43,9 +43,9 @@ def setup():
 
 def readSettings():
     try:
-        print('reading settings')
         global channelsToIgnore
         global serversToWatch
+        global dash
         ignoreChannelsFile = open("channels_to_ignore.txt","r")
         watchServersFile = open("servers_to_watch.txt","r")
         channelsToIgnore = ignoreChannelsFile.read().splitlines()
@@ -55,6 +55,10 @@ def readSettings():
         channelsToIgnore.append('bot')
         if not serversToWatch:
             serversToWatch.append('all')
+        if "Windows" in platform.system():
+            dash = '\\'
+        elif "Linux" in platform.system():
+            dash = '/'
     except:
         raise
 
@@ -103,13 +107,9 @@ async def on_ready():
 
 
 @client.async_event
-async def on_message(message):
-    if "Windows" in platform.system():
-        dash = '\\'
-    elif "Linux" in platform.system():
-        dash = '/'
-    currentTime = strftime("%H:%M:%S", localtime())    
+async def on_message(message):    
     if (not message.author.bot) and (not checkIgnoreChannel(message)):
+        currentTime = strftime("%H:%M:%S", localtime())
         imgurlink = re.findall("(https?)\:\/\/(?:i\.)?(www\.)?(?:m\.)?imgur\.com\/(gallery\/|a\/|r\/[a-z]+)?(?:\/)?([a-zA-Z0-9]+)(#[0-9]+)?(?:\.gifv)?", message.content)
         imgurmatch = re.match("(https?)\:\/\/(?:i\.)?(www\.)?(?:m\.)?imgur\.com\/(gallery\/|a\/|r\/[a-z]+)?(?:\/)?([a-zA-Z0-9]+)(#[0-9]+)?(?:\.gifv)?", message.content)
         twittermatch = re.match("(https?)\:\/\/(www\.)?(?:m\.)?twitter.com\/", message.content)
@@ -250,7 +250,6 @@ async def twitterImageDownload(message, url, path, file_name, dash):
     os.remove('pictures'+dash+path+dash+file_name+'.tmp')
 
 def checkIgnoreChannel(message):
-    print('checkIgnoreChannel')
     for server in serversToWatch:
         if (server == message.server.name) or ('all' == server):
             watchServer = True
