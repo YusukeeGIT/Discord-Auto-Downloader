@@ -41,6 +41,23 @@ def setup():
     f.write(email+':'+password)
     f.close()
 
+def readSettings():
+    try:
+        print('reading settings')
+        global channelsToIgnore
+        global serversToWatch
+        ignoreChannelsFile = open("channels_to_ignore.txt","r")
+        watchServersFile = open("servers_to_watch.txt","r")
+        channelsToIgnore = ignoreChannelsFile.read().splitlines()
+        serversToWatch = watchServersFile.read().splitlines()
+        ignoreChannelsFile.close()
+        watchServersFile.close()
+        channelsToIgnore.append('bot')
+        if not serversToWatch:
+            serversToWatch.append('all')
+    except:
+        raise
+
 try:
     f = open('credentials.txt', 'r')
     login_info = f.read().split(':')
@@ -66,6 +83,14 @@ except:
     f.close()
     sleep(2)
     sys.exit(0)
+
+try:
+    readSettings()
+except:
+    ignoreChannelsFile = open("channels_to_ignore.txt","w+")
+    watchServersFile = open("servers_to_watch.txt","w+")
+    ignoreChannelsFile.close()
+    watchServersFile.close()
 
 @client.async_event
 async def on_ready():
@@ -225,13 +250,7 @@ async def twitterImageDownload(message, url, path, file_name, dash):
     os.remove('pictures'+dash+path+dash+file_name+'.tmp')
 
 def checkIgnoreChannel(message):
-    ignoreChannelsFile = open("channels_to_ignore.txt","r")
-    watchServersFile = open("servers_to_watch.txt","r")
-    channelsToIgnore = ignoreChannelsFile.read().splitlines()
-    serversToWatch = watchServersFile.read().splitlines()
-    channelsToIgnore.append('bot')
-    if not serversToWatch:
-        serversToWatch.append('all')
+    print('checkIgnoreChannel')
     for server in serversToWatch:
         if (server == message.server.name) or ('all' == server):
             watchServer = True
