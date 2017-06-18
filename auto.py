@@ -148,7 +148,9 @@ async def on_message(message):
                             await download_file(str(pic.link), str(name), str(thing[-1].split('.')[-2]), str(thing[-1].split('.')[-1]), dash)
             elif twittermatch:
                 path = str(message.server.name)+dash+str(message.channel.name) 
-                twitterlink = re.search("(https?)\:\/\/(www\.)?(?:m\.)?(twitter.com\/)([a-zA-Z0-9\_\.]+)(\/status\/)+([a-zA-Z0-9]+)", message.content) 
+                linkRegex = '(https?)\:\/\/(www\.)?(?:m\.)?(twitter.com\/)([a-zA-Z0-9\_\.]+)(\/status\/)+([a-zA-Z0-9]+)'
+                imageRegex = '(https?)\:\/\/(www\.)?(m\.)?(pbs.twimg.com\/media\/)+([a-zA-Z0-9]{15})((\.jpg)?(\.png)?)+(\:large)?'
+                twitterlink = re.search(linkRegex, message.content) 
                 url = twitterlink.group(0)
                 thing = url.split('/')
                 fileName = str(thing[-1].split('.')[0])
@@ -158,13 +160,15 @@ async def on_message(message):
                     print('ERROR | Twitter image download')
                     raise
                 try:
-                    await twitterImageDownload(message, url, path, str(thing[-1].split('.')[0]), dash)
+                    await downloadImageFromTmp(message, url, path, str(thing[-1].split('.')[0]), dash, imageRegex)
                 except:
                     print('ERROR | Twitter image download')
                     raise
             elif instagrammatch:
                 path = str(message.server.name)+dash+str(message.channel.name)
-                instagramlink = re.search("(https?)\:\/\/(www\.)?(m\.)?(instagram\.com\/p\/)+([a-zA-Z0-9]+)+(\/)+", message.content)
+                linkRegex = '(https?)\:\/\/(www\.)?(m\.)?(instagram\.com\/p\/)+([a-zA-Z0-9]+)+(\/)+'
+                imageRegex = '(https?)\:\/\/(www\.)?(m\.)?(instagram\.)+([a-z]{4}[0-9]+\-+[0-9]+\.fna\.fbcdn\.net)+(\/[a-z0-9A-Z]+\.[a-z0-9A-Z]+\-[a-z0-9A-Z]+\/[a-z0-9A-Z]+\/[a-z0-9A-Z]+\_[a-z0-9A-Z]+\_[a-z0-9A-Z]+\_[a-z0-9A-Z]+)+((.jpg)?(.png)?)+'
+                instagramlink = re.search(linkRegex, message.content)
                 url = instagramlink.group(0)
                 fileName = 'instagram'
                 try:
@@ -173,7 +177,7 @@ async def on_message(message):
                     print('ERROR | Instagram image download')
                     raise
                 try:
-                    await instagramImageDownload(message, url, path, fileName, dash)
+                    await downloadImageFromTmp(message, url, path, fileName, dash, imageRegex)
                 except:
                     print('ERROR | Instagram image download')
                     raise
@@ -235,59 +239,37 @@ async def on_message(message):
             raise
             print('ERROR!!!! | '+message.server.name+': '+message.author.name+': '+message.content)
 
-async def instagramImageDownload(message, url, path, fileName, dash):
-    currentTime = strftime("%H:%M:%S", localtime())  
-    instagramFile = open('pictures'+dash+path+dash+fileName+'.tmp', "r", encoding="utf8")
-    instagramFileLines = instagramFile.read().splitlines()
-    instagramImageRegex = '(https?)\:\/\/(www\.)?(m\.)?(instagram\.)+([a-z]{4}[0-9]+\-+[0-9]+\.fna\.fbcdn\.net)+(\/[a-z0-9A-Z]+\.[a-z0-9A-Z]+\-[a-z0-9A-Z]+\/[a-z0-9A-Z]+\/[a-z0-9A-Z]+\_[a-z0-9A-Z]+\_[a-z0-9A-Z]+\_[a-z0-9A-Z]+)+((.jpg)?(.png)?)+'
-    for line in instagramFileLines:
-        pic = re.search(instagramImageRegex, line)
+async def downloadImageFromTmp(message, url, path, fileName, dash, imageRegex):
+    currentTime = strftime("%H:%M:%S", localtime())
+    file = open('pictures'+dash+path+dash+fileName+'.tmp', "r", encoding="utf8")
+    fileLines = file.read().splitlines()
+    for line in fileLines:
+        pic = re.search(imageRegex, line)
         if pic:
             url = pic.group(0)
             break;
         else:
             url = False
-    instagramFile.close()
-    if url:
-        print('['+str(currentTime)+']: Download Instagram image from: '+message.server.name+': '+message.channel.name)       
+    file.close()
+    if url:      
         thing = url.split('/')
         fileType = str(thing[-1].split('.')[-1])
+        if 'pbs.twimg.com' in url:
+            print('['+str(currentTime)+']: Download Twitter image from: '+message.server.name+': '+message.channel.name) 
+            if (':large' in fileType) and ('pbs.twimg.com' in url):
+                fileType = str(thing[-1].split('.')[-1]).replace(':large', '')
+            elif (':orig' in fileType) and ('pbs.twimg.com' in url):
+                fileType = str(thing[-1].split('.')[-1]).replace(':orig', '')
+            elif 'pbs.twimg.com' in url:
+                url = url+':large'
+        else:
+            print('['+str(currentTime)+']: Download Instagram image from: '+message.server.name+': '+message.channel.name) 
         try:
             await download_file(url, path, fileName, fileType, dash)
         except:
             print('exception')
             raise   
     os.remove('pictures'+dash+path+dash+fileName+'.tmp')
-
-async def twitterImageDownload(message, url, path, file_name, dash):
-    currentTime = strftime("%H:%M:%S", localtime())   
-    twitterFile = open('pictures'+dash+path+dash+file_name+'.tmp', "r", encoding="utf8")
-    twitterFileLines = twitterFile.read().splitlines()
-    twimgRegex = "(https?)\:\/\/(www\.)?(m\.)?(pbs.twimg.com\/media\/)+([a-zA-Z0-9]{15})((\.jpg)?(\.png)?)+(\:large)?"
-    for line in twitterFileLines:
-        pic = re.search(twimgRegex, line)
-        if pic:
-            url = pic.group(0)
-            break;
-        else:
-            url = False
-    twitterFile.close()
-    if url:
-        print('['+str(currentTime)+']: Download Twitter image from: '+message.server.name+': '+message.channel.name)
-        thing = url.split('/')
-        fileType = str(thing[-1].split('.')[-1])
-        if (':large' in fileType) and ('pbs.twimg.com' in url):
-            fileType = str(thing[-1].split('.')[-1]).replace(':large', '')
-        elif (':orig' in fileType) and ('pbs.twimg.com' in url):
-            fileType = str(thing[-1].split('.')[-1]).replace(':orig', '')
-        elif 'pbs.twimg.com' in url:
-            url = url+':large'
-        try:
-            await download_file(url, path, file_name, fileType, dash)
-        except:
-            print('exception')
-            pass   
-    os.remove('pictures'+dash+path+dash+file_name+'.tmp')
 
 def checkIgnoreChannel(message):
     for server in serversToWatch:
