@@ -214,8 +214,8 @@ async def on_message(message):
             elif (not message.channel.is_private) and ((message.embeds) or (message.attachments)) and (not imgurmatch):
                 name = str(message.server.name)+dash+str(message.channel.name)
                 if (not 'instagram' in message.content) and (not 'twitter' in message.content):
+                    print('['+str(currentTime)+']: Download image from: '+message.server.name+': '+message.channel.name)
                     if message.embeds:
-                        print('['+str(currentTime)+']: Download image from: '+message.server.name+': '+message.channel.name)
                         for pic in message.embeds:
                             url = str(pic['url'])
                             thing = url.split('/')
