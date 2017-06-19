@@ -41,26 +41,41 @@ def setup():
     f.write(email+':'+password)
     f.close()
 
+def readChannelsToIgnore():
+    global channelsToIgnore
+    ignoreChannelsFile = open("channels_to_ignore.txt","r")
+    channelsToIgnore = ignoreChannelsFile.read().splitlines()
+    ignoreChannelsFile.close()
+    channelsToIgnore.append('bot')
+
+def readServersToWatch():
+    global serversToWatch
+    watchServersFile = open("servers_to_watch.txt","r")
+    serversToWatch = watchServersFile.read().splitlines()
+    watchServersFile.close()
+    if not serversToWatch:
+        serversToWatch.append('all')    
+
 def readSettings():
-    try:
-        global channelsToIgnore
-        global serversToWatch
-        global dash
-        ignoreChannelsFile = open("channels_to_ignore.txt","r")
-        watchServersFile = open("servers_to_watch.txt","r")
-        channelsToIgnore = ignoreChannelsFile.read().splitlines()
-        serversToWatch = watchServersFile.read().splitlines()
-        ignoreChannelsFile.close()
-        watchServersFile.close()
-        channelsToIgnore.append('bot')
-        if not serversToWatch:
-            serversToWatch.append('all')
-        if "Windows" in platform.system():
-            dash = '\\'
-        elif "Linux" in platform.system():
-            dash = '/'
-    except:
-        raise
+    global dash
+    global ignoreTwitter
+    global ignoreImgur
+    global ignoreInstagram
+    settingsFile = open('settings.txt','r')
+    settings = settingsFile.read().splitlines()
+    settingsFile.close()
+    for line in settings:
+        settings = line.split('=')
+        if 'ignoreTwitter' in settings[0]:
+            ignoreTwitter = int(settings[1])
+        if 'ignoreInstagram' in settings[0]:
+            ignoreInstagram = int(settings[1])
+        if 'ignoreImgur' in settings[0]:
+            ignoreImgur = int(settings[1])
+    if "Windows" in platform.system():
+        dash = '\\'
+    elif "Linux" in platform.system():
+        dash = '/'
 
 try:
     f = open('credentials.txt', 'r')
@@ -89,18 +104,34 @@ except:
     sys.exit(0)
 
 try:
+    readChannelsToIgnore()
+except Exception as e:
+    ignoreChannelsFile = open("channels_to_ignore.txt","w+")
+    ignoreChannelsFile.close()
+    readChannelsToIgnore()
+
+try:
+    readServersToWatch()
+except:
+    watchServersFile = open("servers_to_watch.txt","w+")
+    watchServersFile.close() 
+    readServersToWatch() 
+
+try:
     readSettings()
 except:
-    ignoreChannelsFile = open("channels_to_ignore.txt","w+")
-    watchServersFile = open("servers_to_watch.txt","w+")
-    ignoreChannelsFile.close()
-    watchServersFile.close()
+    settingsFile = open('settings.txt','w+')
+    settingsFile.writelines('ignoreTwitter=0\n')
+    settingsFile.writelines('ignoreInstagram=0\n')
+    settingsFile.writelines('ignoreImgur=0\n')
+    settingsFile.close()
+    readSettings()
 
 @client.async_event
 async def on_ready():
     subprocess.call('cls',shell=True)
     print('------')
-    print('Auto Downloader (By Moe Sea Cow)\nCurrently logged in as ['+client.user.name+' (ID: "'+client.user.id+'")]')
+    print('Auto Downloader (By Moe Sea Cow and Yusukee)\nCurrently logged in as ['+client.user.name+' (ID: "'+client.user.id+'")]')
     print('Number of Servers Connected: '+str(len(list(client.servers)))+'\nNumbers of DMs: '+str(len(list(client.private_channels))))
     print('------')
     await client.change_presence(afk=True)
@@ -110,11 +141,12 @@ async def on_ready():
 async def on_message(message):    
     if (not message.author.bot) and (not checkIgnoreChannel(message)):
         currentTime = strftime("%H:%M:%S", localtime())
-        imgurlink = re.findall("(https?)\:\/\/(?:i\.)?(www\.)?(?:m\.)?imgur\.com\/(gallery\/|a\/|r\/[a-z]+)?(?:\/)?([a-zA-Z0-9]+)(#[0-9]+)?(?:\.gifv)?", message.content)
         imgurmatch = re.match("(https?)\:\/\/(?:i\.)?(www\.)?(?:m\.)?imgur\.com\/(gallery\/|a\/|r\/[a-z]+)?(?:\/)?([a-zA-Z0-9]+)(#[0-9]+)?(?:\.gifv)?", message.content)
-        twittermatch = re.match("(https?)\:\/\/(www\.)?(?:m\.)?twitter.com\/", message.content)
+        twittermatch = re.match("(https?)\:\/\/(www\.)?(?:m\.)?(twitter.com\/)([a-zA-Z0-9\_\.]+)(\/status\/)+([a-zA-Z0-9]+)", message.content)
+        instagrammatch = re.match("(https?)\:\/\/(www\.)?(m\.)?(instagram\.com\/p\/)+([a-zA-Z0-9]+)+(\/)+", message.content)
         try:
-            if imgurmatch:
+            if imgurmatch and (not ignoreImgur):
+                imgurlink = re.findall("(https?)\:\/\/(?:i\.)?(www\.)?(?:m\.)?imgur\.com\/(gallery\/|a\/|r\/[a-z]+)?(?:\/)?([a-zA-Z0-9]+)(#[0-9]+)?(?:\.gifv)?", message.content)
                 try:
                     for lnk in imgurlink:
                         name = str(message.server.name)+dash+str(message.channel.name)+dash+'@imgur'+dash+str(imgur.get_album(lnk[3]).id)
@@ -144,59 +176,78 @@ async def on_message(message):
                         else:
                             thing = str(pic.link).split('/')
                             await download_file(str(pic.link), str(name), str(thing[-1].split('.')[-2]), str(thing[-1].split('.')[-1]), dash)
-            elif (twittermatch):
-                name = str(message.server.name)+dash+str(message.channel.name)      
-                if message.embeds:
-                    for pic in message.embeds:
-                        thing = str(pic['url']).split('/')
-                        url = str(pic['url'])
-                        fileType = 'tmp'
-                        try:
-                            await download_file(url, str(name), str(thing[-1].split('.')[0]), fileType, dash)
-                        except:
-                            print('exception')
-                            pass
-                        try:
-                            await twitterImageDownload(message, url, str(name), str(thing[-1].split('.')[0]), dash)
-                        except:
-                            print('twitterImageDownload exception')
-                            pass
+            elif twittermatch and (not ignoreTwitter):
+                path = str(message.server.name)+dash+str(message.channel.name) 
+                linkRegex = '(https?)\:\/\/(www\.)?(?:m\.)?(twitter.com\/)([a-zA-Z0-9\_\.]+)(\/status\/)+([a-zA-Z0-9]+)'
+                imageRegex = '(https?)\:\/\/(www\.)?(m\.)?(pbs.twimg.com\/media\/)+([a-zA-Z0-9\-\_\.]{15})((\.jpg)?(\.png)?)+(\:large)?'
+                twitterlink = re.search(linkRegex, message.content) 
+                url = twitterlink.group(0)
+                thing = url.split('/')
+                fileName = str(thing[-1].split('.')[0])
+                try:
+                    await download_file(url, path, fileName, 'tmp', dash)
+                except:
+                    print('ERROR | Twitter image download')
+                    raise
+                try:
+                    await downloadImageFromTmp(message, url, path, str(thing[-1].split('.')[0]), dash, imageRegex)
+                except:
+                    print('ERROR | Twitter image download')
+                    raise
+            elif instagrammatch and (not ignoreInstagram):
+                path = str(message.server.name)+dash+str(message.channel.name)
+                linkRegex = '(https?)\:\/\/(www\.)?(m\.)?(instagram\.com\/p\/)+([a-zA-Z0-9]+)+(\/)+'
+                imageRegex = '(https?)\:\/\/(www\.)?(m\.)?(instagram\.)+([a-z]{4}[0-9]+\-+[0-9]+\.fna\.fbcdn\.net)+(\/[a-z0-9A-Z]+\.[a-z0-9A-Z]+\-[a-z0-9A-Z]+\/[a-z0-9A-Z]+\/[a-z0-9A-Z]+\_[a-z0-9A-Z]+\_[a-z0-9A-Z]+\_[a-z0-9A-Z]+)+((.jpg)?(.png)?)+'
+                instagramlink = re.search(linkRegex, message.content)
+                url = instagramlink.group(0)
+                fileName = 'instagram'
+                try:
+                    await download_file(url, path, fileName, 'tmp', dash)
+                except:
+                    print('ERROR | Instagram image download')
+                    raise
+                try:
+                    await downloadImageFromTmp(message, url, path, fileName, dash, imageRegex)
+                except:
+                    print('ERROR | Instagram image download')
+                    raise
             elif (not message.channel.is_private) and ((message.embeds) or (message.attachments)) and (not imgurmatch):
                 name = str(message.server.name)+dash+str(message.channel.name)
-                print('['+str(currentTime)+']: Download image from: '+message.server.name+': '+message.channel.name)
-                if message.embeds:
-                    for pic in message.embeds:
-                        url = str(pic['url'])
-                        thing = url.split('/')
-                        fileType = str(thing[-1].split('.')[-1])
-                        if (':large' in fileType) and ('pbs.twimg.com' in url):
-                            fileType = str(thing[-1].split('.')[-1]).replace(':large', '')
-                        elif (':orig' in fileType) and ('pbs.twimg.com' in url):
-                            fileType = str(thing[-1].split('.')[-1]).replace(':orig', '')
-                        elif 'pbs.twimg.com' in url:
-                            url = url+':large'
-                        try:
-                            await download_file(url, str(name), str(thing[-1].split('.')[0]), fileType, dash)
-                        except:
-                            print('exception')
-                            pass
-                elif message.attachments:
-                    #GIF download
-                    for pic in message.attachments:
-                        thing = str(pic['url']).split('/')
-                        try:
-                            await download_file(str(pic['url']), (name), str(thing[-1].split('.')[-2]), str(thing[-1].split('.')[-1]), dash)
-                        except:
-                            pass
-                elif r_image.match(urls[0]):
-                    for pic in urls:
-                        thing = str(pic).split('/')
-                        try:
-                            await download_file(str(pic), (name), str(thing[-1].split('.')[-2]), str(thing[-1].split('.')[-1]), dash)
-                        except:
-                            pass
-                else:
-                    print('ERROR!! |'+str(pic['url'])+'|'+name+'|'+str(thing[-1].split('.')[-2])+'|'+str(thing[-1].split('.')[-1]))
+                if (not 'instagram' in message.content) and (not 'twitter' in message.content):
+                    print('['+str(currentTime)+']: Download image from: '+message.server.name+': '+message.channel.name)
+                    if message.embeds:
+                        for pic in message.embeds:
+                            url = str(pic['url'])
+                            thing = url.split('/')
+                            fileType = str(thing[-1].split('.')[-1])
+                            if (':large' in fileType) and ('pbs.twimg.com' in url):
+                                fileType = str(thing[-1].split('.')[-1]).replace(':large', '')
+                            elif (':orig' in fileType) and ('pbs.twimg.com' in url):
+                                fileType = str(thing[-1].split('.')[-1]).replace(':orig', '')
+                            elif 'pbs.twimg.com' in url:
+                                url = url+':large'
+                            try:
+                                await download_file(url, str(name), str(thing[-1].split('.')[0]), fileType, dash)
+                            except:
+                                print('exception')
+                                pass
+                    elif message.attachments:
+                        #GIF download
+                        for pic in message.attachments:
+                            thing = str(pic['url']).split('/')
+                            try:
+                                await download_file(str(pic['url']), (name), str(thing[-1].split('.')[-2]), str(thing[-1].split('.')[-1]), dash)
+                            except:
+                                pass
+                    elif r_image.match(urls[0]):
+                        for pic in urls:
+                            thing = str(pic).split('/')
+                            try:
+                                await download_file(str(pic), (name), str(thing[-1].split('.')[-2]), str(thing[-1].split('.')[-1]), dash)
+                            except:
+                                pass
+                    else:
+                        print('ERROR!! |'+str(pic['url'])+'|'+name+'|'+str(thing[-1].split('.')[-2])+'|'+str(thing[-1].split('.')[-1]))
             elif (message.channel.is_private) and (message.embeds or message.attachments) and (not imgurmatch):
                 name = '@pms\\'+str(message.channel.user)
                 if message.embeds:
@@ -216,38 +267,40 @@ async def on_message(message):
                 else:
                     print('ERROR!! |'+str(pic['url'])+'|'+name+'|'+str(thing[-1].split('.')[-2])+'|'+str(thing[-1].split('.')[-1]))
         except:
-            pass
-            print(message.server.name+': '+message.author.name+': '+message.content)
+            raise
+            print('ERROR!!!! | '+message.server.name+': '+message.author.name+': '+message.content)
 
-async def twitterImageDownload(message, url, path, file_name, dash):
-    currentTime = strftime("%H:%M:%S", localtime())   
-    twitterFile = open('pictures'+dash+path+dash+file_name+'.tmp', "r", encoding="utf8")
-    twitterFileLines = twitterFile.read().splitlines()
-    twimgRegex = "(https?)\:\/\/(www\.)?(m\.)?(pbs.twimg.com\/media\/)+([a-zA-Z0-9]{15})((\.jpg)?(\.png)?)+(\:large)?"
-    for line in twitterFileLines:
-        pic = re.search(twimgRegex, line)
+async def downloadImageFromTmp(message, url, path, fileName, dash, imageRegex):
+    currentTime = strftime("%H:%M:%S", localtime())
+    file = open('pictures'+dash+path+dash+fileName+'.tmp', "r", encoding="utf8")
+    fileLines = file.read().splitlines()
+    for line in fileLines:
+        pic = re.search(imageRegex, line)
         if pic:
             url = pic.group(0)
             break;
         else:
             url = False
-    twitterFile.close()
-    if url:
-        print('['+str(currentTime)+']: Download Twitter image from: '+message.server.name+': '+message.channel.name)
+    file.close()
+    if url:      
         thing = url.split('/')
         fileType = str(thing[-1].split('.')[-1])
-        if (':large' in fileType) and ('pbs.twimg.com' in url):
-            fileType = str(thing[-1].split('.')[-1]).replace(':large', '')
-        elif (':orig' in fileType) and ('pbs.twimg.com' in url):
-            fileType = str(thing[-1].split('.')[-1]).replace(':orig', '')
-        elif 'pbs.twimg.com' in url:
-            url = url+':large'
+        if 'pbs.twimg.com' in url:
+            print('['+str(currentTime)+']: Download Twitter image from: '+message.server.name+': '+message.channel.name) 
+            if (':large' in fileType) and ('pbs.twimg.com' in url):
+                fileType = str(thing[-1].split('.')[-1]).replace(':large', '')
+            elif (':orig' in fileType) and ('pbs.twimg.com' in url):
+                fileType = str(thing[-1].split('.')[-1]).replace(':orig', '')
+            elif 'pbs.twimg.com' in url:
+                url = url+':large'
+        else:
+            print('['+str(currentTime)+']: Download Instagram image from: '+message.server.name+': '+message.channel.name) 
         try:
-            await download_file(url, path, file_name, fileType, dash)
+            await download_file(url, path, fileName, fileType, dash)
         except:
             print('exception')
-            pass   
-    os.remove('pictures'+dash+path+dash+file_name+'.tmp')
+            raise   
+    os.remove('pictures'+dash+path+dash+fileName+'.tmp')
 
 def checkIgnoreChannel(message):
     for server in serversToWatch:
