@@ -61,6 +61,7 @@ def readSettings():
     global ignoreTwitter
     global ignoreImgur
     global ignoreInstagram
+    global ignorePuush
     settingsFile = open('settings.txt','r')
     settings = settingsFile.read().splitlines()
     settingsFile.close()
@@ -72,6 +73,8 @@ def readSettings():
             ignoreInstagram = int(settings[1])
         if 'ignoreImgur' in settings[0]:
             ignoreImgur = int(settings[1])
+        if 'ignorePuush' in settings[0]:
+            ignorePuush = int(settings[1])
     if "Windows" in platform.system():
         dash = '\\'
     elif "Linux" in platform.system():
@@ -124,6 +127,7 @@ except:
     settingsFile.writelines('ignoreTwitter=0\n')
     settingsFile.writelines('ignoreInstagram=0\n')
     settingsFile.writelines('ignoreImgur=0\n')
+    settingsFile.writelines('ignorePuush=0\n')
     settingsFile.close()
     readSettings()
 
@@ -144,6 +148,7 @@ async def on_message(message):
         imgurmatch = re.match("(https?)\:\/\/(?:i\.)?(www\.)?(?:m\.)?imgur\.com\/(gallery\/|a\/|r\/[a-z]+)?(?:\/)?([a-zA-Z0-9]+)(#[0-9]+)?(?:\.gifv)?", message.content)
         twittermatch = re.match("(https?)\:\/\/(www\.)?(?:m\.)?(twitter.com\/)([a-zA-Z0-9\_\.]+)(\/status\/)+([a-zA-Z0-9]+)", message.content)
         instagrammatch = re.match("(https?)\:\/\/(www\.)?(m\.)?(instagram\.com\/p\/)+([a-zA-Z0-9]+)+(\/)+", message.content)
+        puushmatch = re.match("(https?)\:\/\/(?:i\.)?(www\.)?(puu\.sh\/)([a-zA-Z0-9]+\/)([a-zA-Z0-9]+)((\.jpg)?(\.png)?(\.gif)?)+", message.content)
         try:
             if imgurmatch and (not ignoreImgur):
                 imgurlink = re.findall("(https?)\:\/\/(?:i\.)?(www\.)?(?:m\.)?imgur\.com\/(gallery\/|a\/|r\/[a-z]+)?(?:\/)?([a-zA-Z0-9]+)(#[0-9]+)?(?:\.gifv)?", message.content)
@@ -211,6 +216,20 @@ async def on_message(message):
                 except:
                     print('ERROR | Instagram image download')
                     raise
+            elif puushmatch and (not ignorePuush):
+                path = str(message.server.name)+dash+str(message.channel.name)
+                imageRegex = '(https?)\:\/\/(?:i\.)?(www\.)?(puu\.sh\/)([a-zA-Z0-9]+\/)([a-zA-Z0-9]+)((\.jpg)?(\.png)?(\.gif)?)+'
+                pic = re.search(imageRegex, message.content)
+                url = pic.group(0)
+                thing = url.split('/')
+                fileType = str(thing[-1].split('.')[-1])
+                fileName = str(thing[-1].split('.')[0])
+                print('['+str(currentTime)+']: Download puu.sh image from: '+message.server.name+': '+message.channel.name) 
+                try:
+                    await download_file(url, path, fileName, fileType, dash)
+                except:
+                    print('exception')
+                    raise 
             elif (not message.channel.is_private) and ((message.embeds) or (message.attachments)) and (not imgurmatch):
                 name = str(message.server.name)+dash+str(message.channel.name)
                 if (not 'instagram' in message.content) and (not 'twitter' in message.content):
