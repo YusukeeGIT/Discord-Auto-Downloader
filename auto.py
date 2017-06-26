@@ -147,7 +147,7 @@ async def on_message(message):
         currentTime = strftime("%H:%M:%S", localtime())
         imgurmatch = re.match("(https?)\:\/\/(?:i\.)?(www\.)?(?:m\.)?imgur\.com\/(gallery\/|a\/|r\/[a-z]+)?(?:\/)?([a-zA-Z0-9]+)(#[0-9]+)?(?:\.gifv)?", message.content)
         twittermatch = re.match("(https?)\:\/\/(www\.)?(?:m\.)?(twitter.com\/)([a-zA-Z0-9\_\.]+)(\/status\/)+([a-zA-Z0-9]+)", message.content)
-        instagrammatch = re.match("(https?)\:\/\/(www\.)?(m\.)?(instagram\.com\/p\/)+([a-zA-Z0-9]+)+(\/)+", message.content)
+        instagrammatch = re.match("(https?)\:\/\/(www\.)?(m\.)?(instagram\.com\/p\/)+([a-zA-Z0-9\-\_]+)+(\/)+", message.content)
         puushmatch = re.match("(https?)\:\/\/(?:i\.)?(www\.)?(puu\.sh\/)([a-zA-Z0-9]+\/)([a-zA-Z0-9]+)((\.jpg)?(\.png)?(\.gif)?)+", message.content)
         try:
             if imgurmatch and (not ignoreImgur):
@@ -201,7 +201,7 @@ async def on_message(message):
                     raise
             elif instagrammatch and (not ignoreInstagram):
                 path = str(message.server.name)+dash+str(message.channel.name)
-                linkRegex = '(https?)\:\/\/(www\.)?(m\.)?(instagram\.com\/p\/)+([a-zA-Z0-9]+)+(\/)+'
+                linkRegex = '(https?)\:\/\/(www\.)?(m\.)?(instagram\.com\/p\/)+([a-zA-Z0-9\-\_]+)+(\/)+'
                 imageRegex = '(https?)\:\/\/(www\.)?(m\.)?(instagram\.)+([a-z]{4}[0-9]+\-+[0-9]+\.fna\.fbcdn\.net)+(\/[a-z0-9A-Z]+\.[a-z0-9A-Z]+\-[a-z0-9A-Z]+\/[a-z0-9A-Z]+\/[a-z0-9A-Z]+\_[a-z0-9A-Z]+\_[a-z0-9A-Z]+\_[a-z0-9A-Z]+)+((.jpg)?(.png)?)+'
                 instagramlink = re.search(linkRegex, message.content)
                 url = instagramlink.group(0)
