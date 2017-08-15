@@ -62,6 +62,7 @@ def readSettings():
     global ignoreImgur
     global ignoreInstagram
     global ignorePuush
+    global ignoreGif
     settingsFile = open('settings.txt','r')
     settings = settingsFile.read().splitlines()
     settingsFile.close()
@@ -75,6 +76,8 @@ def readSettings():
             ignoreImgur = int(settings[1])
         if 'ignorePuush' in settings[0]:
             ignorePuush = int(settings[1])
+        if 'ignoreGif' in settings[0]:
+            ignoreGif = int(settings[1])
     if "Windows" in platform.system():
         dash = '\\'
     elif "Linux" in platform.system():
@@ -128,6 +131,7 @@ except:
     settingsFile.writelines('ignoreInstagram=0\n')
     settingsFile.writelines('ignoreImgur=0\n')
     settingsFile.writelines('ignorePuush=0\n')
+    settingsFile.writelines('ignoreGif=0\n')
     settingsFile.close()
     readSettings()
 
@@ -137,6 +141,17 @@ async def on_ready():
     print('------')
     print('Auto Downloader (By Moe Sea Cow and Yusukee)\nCurrently logged in as ['+client.user.name+' (ID: "'+client.user.id+'")]')
     print('Number of Servers Connected: '+str(len(list(client.servers)))+'\nNumbers of DMs: '+str(len(list(client.private_channels))))
+    print('Ignore Settings:');
+    if ignoreTwitter == 1:
+        print('- Ignoring Twitter links')
+    if ignoreInstagram == 1:
+        print('- Ignoring Instagram links')
+    if ignoreImgur == 1:
+        print('- Ignoring Imgur links')
+    if ignorePuush == 1:
+        print('- Ignoring Puu.sh links')
+    if ignoreGif == 1:
+        print('- Ignoring gif files')
     print('------')
     await client.change_presence(afk=True)
 
@@ -341,6 +356,9 @@ def checkIgnoreChannel(message):
 
 async def download_file(url, path, file_name, file_type, dash):
     if file_type == 'exe' or file_name == 'js':
+        return
+    if 'gif' in file_type and ignoreGif == 1:
+        print('Ignoring .gif file');
         return
     if not os.path.exists('.'+dash+'pictures'+dash+path):
         os.makedirs('.'+dash+'pictures'+dash+path)
