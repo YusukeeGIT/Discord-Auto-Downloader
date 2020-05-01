@@ -1,3 +1,4 @@
+# !!! Old, probably does not work anymore !!!
 #### This is a modified version of [PvtSeaCow's Discord-AutoDownloader](https://github.com/PvtSeaCow/Discord-AutoDownloader)
 
 # IMPORTANT
